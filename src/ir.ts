@@ -48,6 +48,7 @@ export const KIND_COLORS: Record<string, string> = {
   const: "#9e9e9e",
   seq: "#e53935",
   comb: "#1e88e5",
+  inst: "#8e24aa",
   combbox: "#ff6d00",
   output: "#ffc107",
 };
@@ -57,6 +58,7 @@ export const KIND_LABELS: Record<string, string> = {
   const: "constant",
   seq: "seq (reg/delay/fifo)",
   comb: "comb (组合逻辑)",
+  inst: "instance (子模块实例)",
   combbox: "comb 域 (折叠)",
   output: "output (result)",
 };

@@ -19,12 +19,14 @@ FUNC_DECL = re.compile(r"func\.func\s+(@[\w$.-]+)\s*\(")
 # PassIRDumper file name: NNNN_<before|after>_<NN>_<pass-short>__L<level>[_FAILED].mlir
 PASS_DUMP = re.compile(r"^(\d+)_(before|after)_(\d+)_(.+?)__L(\d+)(_FAILED)?\.mlir$")
 
-# 归类方案（与前端 wasmParse.ts 一致）：input/const/seq/comb/output
+# 归类方案（与前端 wasmParse.ts 一致）：input/const/seq/comb/inst/output
 #   seq    = reg / delay_line / fifo 等时序存储元件
+#   inst   = instance 等子模块实例化（层次结构，非组合逻辑）
 #   comb   = 其余全部组合逻辑（and/or/xor/cmp/mux/extract/...）
 OP_KIND = {
     "reg": "seq", "delay_line": "seq", "fifo": "seq",
     "constant": "const",
+    "instance": "inst",
 }
 
 

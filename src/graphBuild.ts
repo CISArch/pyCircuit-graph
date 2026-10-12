@@ -10,6 +10,8 @@ export const ADDED_EDGE_FILL = "#81c784";
 export const REMOVED_EDGE_FILL = "#e57373";
 export const ADDED_SIZE = 7;
 export const DEFAULT_SIZE = 5;
+/** instance（子模块实例）节点稍大，突出层次结构 */
+export const INST_SIZE = 7.5;
 export const GHOST_FILL = "#455a64";
 export const COMB_FILL = "#1e88e5";
 export const COMB_SIZE = 8;
@@ -43,12 +45,13 @@ function nodeLabel(n: IRNode, isNew: boolean): string {
 
 function toVNode(n: IRNode, isNew: boolean): G6Node {
   const isResult = n.op === "result";
+  const kind = normalizeKind(n.kind);
   return {
     id: n.id,
     cluster: n.cluster,
     label: nodeLabel(n, isNew),
-    fill: isResult ? RESULT_FILL : isNew ? ADDED_FILL : KIND_COLORS[normalizeKind(n.kind)] ?? KIND_COLORS.comb,
-    size: isResult ? RESULT_SIZE : isNew ? ADDED_SIZE : DEFAULT_SIZE,
+    fill: isResult ? RESULT_FILL : isNew ? ADDED_FILL : KIND_COLORS[kind] ?? KIND_COLORS.comb,
+    size: isResult ? RESULT_SIZE : isNew ? ADDED_SIZE : kind === "inst" ? INST_SIZE : DEFAULT_SIZE,
     data: n,
   };
 }

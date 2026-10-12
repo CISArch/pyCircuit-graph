@@ -6,10 +6,11 @@ const SSA_DEF0 = /^(%[\w$.#-]+)(?::\d+)?\s*=\s*([\w.]+)\s*(.*)$/;
 const SSA_USE = /%([\w$.#-]+)/g;
 const FUNC_DECL = /func\.func\s+(@[\w$.-]+)\s*\(/;
 
-// 归类方案（四大类 + output）：
+// 归类方案（五大类 + output）：
 //   input  = 函数参数（arg）
 //   const  = constant
 //   seq    = reg / delay_line / fifo 等时序存储元件
+//   inst   = instance 等子模块实例化（层次结构，独立成类，不计入 comb）
 //   comb   = 其余全部组合逻辑（and/or/xor/cmp/mux/extract/...）
 //   output = 函数返回（result）
 const OP_KIND: Record<string, string> = {
@@ -17,6 +18,7 @@ const OP_KIND: Record<string, string> = {
   delay_line: "seq",
   fifo: "seq",
   constant: "const",
+  instance: "inst",
 };
 
 function opKind(op: string): string {
