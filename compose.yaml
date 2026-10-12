@@ -1,0 +1,32 @@
+services:
+  pycircuit-graph:
+    build: .
+    image: pycircuit-graph:latest
+    container_name: pycircuit-graph
+    restart: unless-stopped
+    ports:
+      - "4173:4173"
+    volumes:
+      # Host logs -> container log root read-only; LOG_ROOT points here by default.
+      - ../auto_perf_logs:/data/auto_perf_logs:ro
+    # Resource guardrails: this service is a tiny static+API server; hard caps
+    # keep it from ever interfering with build/test workloads on this host.
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 128M
+    mem_limit: 128m
+    cpus: 1.0
+    # Restart early if the server process dies or gets OOM-killed repeatedly.
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4173/api/autoperf/tasks').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
