@@ -74,7 +74,7 @@ MLIR 的 `mlir__detail__OpToOpPassAdaptor` 包装层会被展开跳过，真实 
 
 - 函数下拉选择（每个 func 一个子图）
 - 布局切换（force、forceatlas2、dagre 层次 TB/LR（默认）、radial、circular、concentric、grid、fruchterman、mds）
-- **wire 旁路**：有入边的 `pyc.wire` 节点不显示——其全部出边改为从驱动节点发出（wire 链一路传递到最终驱动）；无入边的 wire（外部输入）保留
+- **透明节点旁路**：有入边的 `pyc.wire`（连线）与 `pyc.alias`（重命名）节点不显示——其全部出边改为从驱动节点发出，链式（alias→wire→驱动）一路传递到最终驱动；无入边的节点（外部输入）保留；多驱动或成环的节点保留
 - 左侧文件树宽度可拖拽；右侧 IR 原文面板宽度可拖拽，悬停行高亮图中节点（悬停 wire 行会高亮其驱动节点）
 - 按操作类别着色与过滤：input（绿）/ constant（灰）/ seq（红）/ comb（蓝）/ **instance 子模块实例（紫，独立成类、节点略大）** / **comb 域折叠节点（橙）** / output（黄）
 - 按 SSA 名或 op 搜索过滤

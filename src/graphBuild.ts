@@ -161,32 +161,34 @@ function collapseCombs(
   return { nodes: outNodes, edges: outEdges, proxyOf };
 }
 
-/** 是否为 wire 节点 */
-export function isWireOp(op: string): boolean {
-  return op === "wire" || op === "pyc.wire" || op.endsWith(".wire");
+/** 透明节点（不改变值的语义，仅重命名/连线的 op）：wire / alias */
+export function isPassthroughOp(op: string): boolean {
+  const suffix = op.includes(".") ? op.split(".").pop()! : op;
+  return suffix === "wire" || suffix === "alias";
 }
 
 /**
- * wire 旁路：有入边的 wire 节点，其全部出边改由它的驱动节点发出，wire 节点删除。
- * - 无入边的 wire（外部输入）保留；
- * - 多驱动或成环的 wire 不旁路（语义有歧义）；
- * - wire 链（wire→wire→驱动）一路传递解析到最终驱动。
- * redirect：被删 wire id -> 最终驱动 id（供原文行悬停定位）。
+ * 透明节点旁路：wire / alias 节点若有入边，则其全部出边改由它的驱动节点发出，
+ * 该节点删除（alias 是纯粹的重命名，wire 是纯粹的连线）。
+ * - 无入边的节点（外部输入）保留；
+ * - 多驱动或成环的节点不旁路（语义有歧义）；
+ * - 链式（alias→wire→驱动）一路传递解析到最终驱动。
+ * redirect：被删节点 id -> 最终驱动 id（供原文行悬停定位）。
  */
-export function bypassWires(fn: IRFunction): {
+export function bypassPassthrough(fn: IRFunction): {
   nodes: IRNode[];
   edges: IREdge[];
   redirect: Map<string, string>;
 } {
-  const wireIds = new Set(fn.nodes.filter((n) => isWireOp(n.op)).map((n) => n.id));
+  const ptIds = new Set(fn.nodes.filter((n) => isPassthroughOp(n.op)).map((n) => n.id));
   const redirect = new Map<string, string>();
-  if (!wireIds.size) return { nodes: fn.nodes, edges: fn.edges, redirect };
+  if (!ptIds.size) return { nodes: fn.nodes, edges: fn.edges, redirect };
 
-  // wire -> 唯一驱动（可能仍是 wire）；出现多个不同驱动则标记为不可旁路
+  // 透明节点 -> 唯一驱动（可能仍是透明节点）；出现多个不同驱动则标记为不可旁路
   const driverOf = new Map<string, string>();
   const multi = new Set<string>();
   for (const e of fn.edges) {
-    if (!wireIds.has(e.target) || e.source === e.target) continue;
+    if (!ptIds.has(e.target) || e.source === e.target) continue;
     const cur = driverOf.get(e.target);
     if (cur == null) driverOf.set(e.target, e.source);
     else if (cur !== e.source) multi.add(e.target);
@@ -195,7 +197,7 @@ export function bypassWires(fn: IRFunction): {
   const resolveDriver = (id: string): string | null => {
     const seen = new Set<string>();
     let cur = id;
-    while (wireIds.has(cur)) {
+    while (ptIds.has(cur)) {
       if (seen.has(cur) || multi.has(cur)) return null; // 环 / 多驱动
       seen.add(cur);
       const next = driverOf.get(cur);
@@ -206,7 +208,7 @@ export function bypassWires(fn: IRFunction): {
   };
 
   const bypassable = new Set<string>();
-  for (const w of wireIds) {
+  for (const w of ptIds) {
     const d = resolveDriver(w);
     if (d != null) {
       bypassable.add(w);
@@ -219,7 +221,7 @@ export function bypassWires(fn: IRFunction): {
 
   const edges: IREdge[] = [];
   for (const e of fn.edges) {
-    // 指向被旁路 wire 的边（wire 的入边、wire→wire）随节点一起消失
+    // 指向被旁路节点的边（其入边、透明节点之间的边）随节点一起消失
     if (bypassable.has(e.target)) continue;
     const source = resolve(e.source);
     if (source === e.target) continue;
@@ -239,8 +241,8 @@ export function functionToGraph(
   diff?: PairDiff | null,
 ): { nodes: G6Node[]; edges: G6Edge[]; visibleIdOf: Map<string, string> } {
   const q = search.trim().toLowerCase();
-  // wire 旁路：删除有入边的 wire 节点，其出边改由驱动节点发出
-  const bypassed = bypassWires(fn);
+  // 透明节点旁路：删除有入边的 wire/alias 节点，其出边改由驱动节点发出
+  const bypassed = bypassPassthrough(fn);
   let nodes: G6Node[] = bypassed.nodes
     .filter((n) => kindFilter.has(normalizeKind(n.kind)))
     .filter((n) => !q || n.id.toLowerCase().includes(q) || n.op.toLowerCase().includes(q))
@@ -249,7 +251,7 @@ export function functionToGraph(
   // 原始节点 id -> 当前图上实际可见的节点 id（折叠 -> comb 聚合节点；消环 -> ·Q 输出端）
   const visibleIdOf = new Map<string, string>();
   for (const n of nodes) visibleIdOf.set(n.id, n.id);
-  // 被删的 wire：原文行悬停高亮改为它的驱动节点
+  // 被删的 wire/alias：原文行悬停高亮改为它的驱动节点
   for (const [wire, driver] of bypassed.redirect) visibleIdOf.set(wire, driver);
 
   // ---- comb 域折叠（在拆分/建边之前做，减少图的规模）----
