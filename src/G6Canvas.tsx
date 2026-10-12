@@ -52,22 +52,22 @@ const EDGE_STROKE = "#546e7a";
 const COMB_FILL = "rgba(30, 136, 229, 0.08)";
 const COMB_STROKE = "#1e88e5";
 
+/** comb 气泡包络膨胀半径（px）与 dagre 节点间距（px），固定值 */
+const BUBBLE_RADIUS = 6;
+const DAGRE_SPACING = 8;
+
 export default function G6Canvas(props: {
   nodes: G6Node[];
   edges: G6Edge[];
   layout: Layout;
   hoveredNode: string | null;
-  /** comb 气泡包络的膨胀半径（px）：越大气泡越胖，默认 6 */
-  bubbleRadius?: number;
   /** 是否显示节点标签（标签会撑大 bubble-sets 的成员包围盒，使气泡显著变大） */
   showLabels?: boolean;
-  /** dagre 布局的节点间距（px），层间距 = 3×；默认 8 */
-  dagreSpacing?: number;
   onNodeClick: (n: G6Node | null) => void;
   /** 右键节点（用于展开/收起 comb 聚合节点） */
   onNodeContextmenu?: (n: G6Node) => void;
 }) {
-  const { nodes, edges, layout, hoveredNode, bubbleRadius = 6, showLabels = true, dagreSpacing = 8, onNodeClick, onNodeContextmenu } = props;
+  const { nodes, edges, layout, hoveredNode, showLabels = true, onNodeClick, onNodeContextmenu } = props;
   const containerRef = useRef<HTMLDivElement>(null);
   const graphRef = useRef<Graph | null>(null);
   const nodeById = useRef(new Map<string, G6Node>());
@@ -197,10 +197,10 @@ export default function G6Canvas(props: {
         type: "bubble-sets",
         members,
         // 气泡膨胀半径：nodeR0/edgeR0 是内影响半径，nodeR1/edgeR1 是外影响半径
-        nodeR0: bubbleRadius,
-        nodeR1: bubbleRadius * 3.3,
-        edgeR0: bubbleRadius * 0.7,
-        edgeR1: bubbleRadius * 1.3,
+        nodeR0: BUBBLE_RADIUS,
+        nodeR1: BUBBLE_RADIUS * 3.3,
+        edgeR0: BUBBLE_RADIUS * 0.7,
+        edgeR1: BUBBLE_RADIUS * 1.3,
         style: {
           fill: COMB_FILL,
           stroke: COMB_STROKE,
@@ -242,11 +242,11 @@ export default function G6Canvas(props: {
     });
     const baseCfg = LAYOUT_CONFIG[layout] ?? LAYOUT_CONFIG.force;
     const cfg = layout === "dagre-tb" || layout === "dagre-lr"
-      ? buildDagreConfig(baseCfg, dagreSpacing)
+      ? buildDagreConfig(baseCfg, DAGRE_SPACING)
       : baseCfg;
     (g as unknown as { setLayout: (o: unknown) => void }).setLayout(cfg);
     void g.render().catch((err) => console.error("[IR Graph] G6 渲染失败:", err));
-  }, [nodes, edges, layout, bubbleRadius, showLabels, dagreSpacing]);
+  }, [nodes, edges, layout, showLabels]);
 
   return <div ref={containerRef} className="g6canvas" style={{ position: "absolute", inset: 0 }} />;
 }

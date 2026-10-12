@@ -48,7 +48,7 @@ export const KIND_COLORS: Record<string, string> = {
   const: "#9e9e9e",
   seq: "#e53935",
   comb: "#1e88e5",
-  combbox: "#0d47a1",
+  combbox: "#ff6d00",
   output: "#ffc107",
 };
 

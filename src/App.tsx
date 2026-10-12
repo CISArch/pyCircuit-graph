@@ -182,10 +182,8 @@ export default function App() {
   const draggingDivider = useRef(false);
   const draggingTree = useRef(false);
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
-  const [bubbleRadius, setBubbleRadius] = useState(6);
   const [showLabels, setShowLabels] = useState(true);
   const [splitRegs, setSplitRegs] = useState(false);
-  const [dagreSpacing, setDagreSpacing] = useState(8);
   // comb 域默认折叠成聚合大节点；expandedClusters 是用户点开过的域
   const [collapseCombs, setCollapseCombs] = useState(true);
   const [expandedClusters, setExpandedClusters] = useState<Set<string>>(new Set());
@@ -671,26 +669,6 @@ export default function App() {
         <select value={layout} onChange={(e) => setLayout(e.target.value as Layout)}>
           {LAYOUTS.map((l) => <option key={l} value={l}>{l}</option>)}
         </select>
-        {(layout === "dagre-tb" || layout === "dagre-lr") && (
-          <label className="chk" title="dagre 布局节点间距（px），层间距 = 3 倍">
-            间距
-            <input
-              type="range" min={0} max={40} step={1} value={dagreSpacing}
-              style={{ width: 60, verticalAlign: "middle" }}
-              onChange={(e) => setDagreSpacing(Number(e.target.value))}
-            />
-            <span style={{ fontSize: 10, width: 18, display: "inline-block" }}>{dagreSpacing}</span>
-          </label>
-        )}
-        <label className="chk" title="comb 气泡包络膨胀半径（px）">
-          气泡
-          <input
-            type="range" min={0} max={40} step={1} value={bubbleRadius}
-            style={{ width: 70, verticalAlign: "middle" }}
-            onChange={(e) => setBubbleRadius(Number(e.target.value))}
-          />
-          <span style={{ fontSize: 10, width: 18, display: "inline-block" }}>{bubbleRadius}</span>
-        </label>
         <label className="chk" title="显示/隐藏节点标签（标签文本会撑大气泡包围盒）">
           <input
             type="checkbox" checked={showLabels}
@@ -875,8 +853,6 @@ export default function App() {
             edges={graph.edges}
             layout={layout}
             hoveredNode={hoveredNode}
-            bubbleRadius={bubbleRadius}
-            dagreSpacing={dagreSpacing}
             showLabels={showLabels}
             onNodeClick={(n) => setSelected(n)}
             onNodeContextmenu={(n) => {
